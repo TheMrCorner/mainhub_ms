@@ -13,6 +13,7 @@ import com.mrcorner.journal.user.repositories.IRolesRepository;
 import com.mrcorner.journal.user.repositories.IUserRepository;
 import com.mrcorner.journal.user.repositories.IUsersRolesRepository;
 import com.mrcorner.journal.user.service.IUserService;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public class UserServiceImpl implements IUserService {
 
     IUserRepository userRepository;
@@ -31,18 +33,6 @@ public class UserServiceImpl implements IUserService {
     IRolesRepository rolesRepository;
     IUserInfoMapper userInfoMapper;
     IUserRequestMapper userRequestMapper;
-
-    public UserServiceImpl(IUserRepository userRepository,
-                           IUsersRolesRepository usersRolesRepository,
-                           IRolesRepository rolesRepository,
-                           IUserInfoMapper userInfoMapper,
-                           IUserRequestMapper userRequestMapper){
-        this.rolesRepository = rolesRepository;
-        this.userRepository = userRepository;
-        this.usersRolesRepository = usersRolesRepository;
-        this.userInfoMapper = userInfoMapper;
-        this.userRequestMapper = userRequestMapper;
-    }
 
     @Override
     public List<UserRole> findUserRoles(UserInfo user) throws DataNotFoundException {

@@ -1,7 +1,7 @@
 FROM openjdk:17-oracle
 
-ADD /build/libs/journal-0.0.1-SNAPSHOT.jar /opt/journal-0.0.1-SNAPSHOT.jar
+ADD /build/libs/journal-0.0.2-SNAPSHOT.jar /opt/journal-0.0.2-SNAPSHOT.jar
 
-EXPOSE 5687
+EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/opt/journal-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "/opt/journal-0.0.2-SNAPSHOT.jar"]
