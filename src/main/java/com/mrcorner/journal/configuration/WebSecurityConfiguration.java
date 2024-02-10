@@ -2,7 +2,8 @@ package com.mrcorner.journal.configuration;
 
 import com.mrcorner.journal.configuration.authentication.JwtAuthFilter;
 import com.mrcorner.journal.user.service.impl.UserDetailsServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,9 +24,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfiguration  {
-    @Autowired
-    JwtAuthFilter jwtAuthFilter;
+
+    private final JwtAuthFilter jwtAuthFilter;
+
+    @Value("${app.security.enabled}")
+    private Boolean enableSecurity;
 
     @Bean
     public UserDetailsService userDetailsService(){
@@ -33,19 +39,32 @@ public class WebSecurityConfiguration  {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity.csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refreshToken").permitAll()
-                .and()
-                .authorizeHttpRequests().requestMatchers("/api/v1/**")
-                .authenticated()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).build();
-
+        if(Boolean.TRUE.equals(enableSecurity)){
+            return httpSecurity
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(authRequest ->
+                            authRequest.requestMatchers("/api/v1/auth/**")
+                                    .permitAll()
+                            .anyRequest().authenticated())
+                    .sessionManagement(sessionManager ->
+                            sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .authenticationProvider(authenticationProvider())
+                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                    .build();
+        } // if
+        else{
+            return httpSecurity
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(authRequest ->
+                            authRequest.requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**")
+                                    .permitAll()
+                                    .anyRequest().authenticated())
+                    .sessionManagement(sessionManager ->
+                            sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .authenticationProvider(authenticationProvider())
+                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                    .build();
+        }
     }
 
     @Bean
@@ -59,7 +78,6 @@ public class WebSecurityConfiguration  {
         authenticationProvider.setUserDetailsService(userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
-
     }
 
     @Bean

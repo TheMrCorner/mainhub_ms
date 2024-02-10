@@ -30,7 +30,7 @@ import org.springframework.web.server.ServerErrorException;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1")
 public class AuthenticationController {
 
     @Autowired
@@ -45,7 +45,7 @@ public class AuthenticationController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<JwtResponseDto> authenticateAndGetToken(@RequestBody AuthRequestDto authRequestDTO)
             throws AuthenticationErrorException, DataNotFoundException, InvalidDataException {
         try {
@@ -76,7 +76,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(userResponse);
     }
 
-    @PostMapping("/refreshToken")
+    @PostMapping("/auth/refreshToken")
     public JwtResponseDto refreshToken(@RequestBody RefreshTokenRequestDto refreshTokenRequestDTO)
             throws DataNotFoundException, AuthenticationErrorException{
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getToken());
