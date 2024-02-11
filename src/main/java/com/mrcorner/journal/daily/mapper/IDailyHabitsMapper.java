@@ -19,7 +19,6 @@ public interface IDailyHabitsMapper extends IEntityMapper<DailyHabitsDto, DailyH
     @Mapping(target = "dbInsDate", ignore = true)
     @Mapping(target = "dbDelDate", ignore = true)
     @Mapping(target = "dbModDate", ignore = true)
-    @Mapping(target = "idHabit", ignore = true)
     @Mapping(target = "status", source = "status", qualifiedByName = "toShortInt")
     DailyHabit toEntity(DailyHabitsDto dto);
 
