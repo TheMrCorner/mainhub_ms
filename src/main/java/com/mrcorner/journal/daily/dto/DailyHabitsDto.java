@@ -15,6 +15,7 @@ import lombok.ToString;
 @ToString(doNotUseGetters = true)
 public class DailyHabitsDto {
     private int idDailyHabit;
+    private int idHabit;
     private int idDay;
     private HabitDto habit;
     private HabitStatus status;

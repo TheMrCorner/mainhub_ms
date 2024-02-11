@@ -1,27 +1,36 @@
 package com.mrcorner.journal.daily.service;
 
 import com.mrcorner.journal.daily.dto.DailyEventDto;
+import com.mrcorner.journal.daily.dto.DailyHabitsDto;
 import com.mrcorner.journal.daily.dto.DailyMealPrepDto;
 import com.mrcorner.journal.daily.dto.DailyPreviewDto;
+import com.mrcorner.journal.daily.dto.DailyReviewDto;
 import com.mrcorner.journal.daily.dto.DailyTargetDto;
 import com.mrcorner.journal.daily.mapper.IDailyEventMapper;
+import com.mrcorner.journal.daily.mapper.IDailyHabitsMapper;
 import com.mrcorner.journal.daily.mapper.IDailyMealPrepMapper;
 import com.mrcorner.journal.daily.mapper.IDailyPreviewMapper;
+import com.mrcorner.journal.daily.mapper.IDailyReviewMapper;
 import com.mrcorner.journal.daily.mapper.IDailyTargetMapper;
 import com.mrcorner.journal.daily.model.DailyEvent;
+import com.mrcorner.journal.daily.model.DailyHabit;
 import com.mrcorner.journal.daily.model.DailyMealPrep;
 import com.mrcorner.journal.daily.model.DailyPreview;
+import com.mrcorner.journal.daily.model.DailyReview;
 import com.mrcorner.journal.daily.model.DailyTarget;
 import com.mrcorner.journal.daily.repository.DailyEventRepository;
+import com.mrcorner.journal.daily.repository.DailyHabitRepository;
 import com.mrcorner.journal.daily.repository.DailyMealPrepRepository;
 import com.mrcorner.journal.daily.repository.DailyPreviewRepository;
+import com.mrcorner.journal.daily.repository.DailyReviewRepository;
 import com.mrcorner.journal.daily.repository.DailyTargetRepository;
 import com.mrcorner.journal.exceptions.DataNotFoundException;
 import com.mrcorner.journal.exceptions.InvalidDataException;
+import com.mrcorner.journal.monthly.service.HabitService;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import javax.xml.crypto.Data;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -46,6 +55,15 @@ public class DailyService {
     // DailyMealPrep
     DailyMealPrepRepository dailyMealPrepRepository;
     IDailyMealPrepMapper dailyMealPrepMapper;
+
+    // DailyReview
+    DailyReviewRepository dailyReviewRepository;
+    IDailyReviewMapper dailyReviewMapper;
+
+    // DailyHabits
+    DailyHabitRepository dailyHabitRepository;
+    IDailyHabitsMapper dailyHabitsMapper;
+    HabitService habitService;
 
     public DailyPreviewDto newDailyPreview(DailyPreviewDto dailyPreviewDto) throws InvalidDataException {
 
@@ -115,6 +133,25 @@ public class DailyService {
         return dailyEventMapper.toDtoList(dailyEvents);
     } // newDailyEventList
 
+    public DailyEventDto newDailyEvent(DailyEventDto dailyEventDto) throws InvalidDataException{
+        if(dailyEventDto.getIdDay() <= 0){
+            throw new InvalidDataException("No day provided for the event");
+        } // if
+
+        DailyEvent dailyEvent = dailyEventMapper.toEntity(dailyEventDto);
+        dailyEvent.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        dailyEvent.setDbModDate(new Timestamp(System.currentTimeMillis()));
+
+        try{
+            dailyEvent = dailyEventRepository.save(dailyEvent);
+        } // try
+        catch(DataIntegrityViolationException | IllegalArgumentException ex){
+            throw new InvalidDataException("Error while saving the event " + ex.getMessage());
+        } // catch
+
+        return dailyEventMapper.toDto(dailyEvent);
+    } // newDailyEvent
+
     public DailyMealPrepDto newDailyMealPrep(DailyMealPrepDto dailyMealPrepDto) throws InvalidDataException{
         DailyMealPrep dailyMealPrep = dailyMealPrepMapper.toEntity(dailyMealPrepDto);
 
@@ -130,6 +167,68 @@ public class DailyService {
 
         return dailyMealPrepMapper.toDto(dailyMealPrep);
     } // newDailyMealPrep
+
+    public DailyReviewDto newDailyReview(DailyReviewDto dailyReviewDto) throws InvalidDataException{
+        if(dailyReviewDto.getIdDay() <= 0){
+            throw new InvalidDataException("No day provided for the review");
+        } // if
+
+        DailyReview dailyReview = dailyReviewMapper.toEntity(dailyReviewDto);
+        dailyReview.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        dailyReview.setDbModDate(new Timestamp(System.currentTimeMillis()));
+
+        try{
+            dailyReview = dailyReviewRepository.save(dailyReview);
+        } // try
+        catch(DataIntegrityViolationException | IllegalArgumentException ex){
+            throw new InvalidDataException("Error while saving the review " + ex.getMessage());
+        } // catch
+
+        List<DailyHabitsDto> dailyHabitsList = newDailyHabits(dailyReviewDto.getDailyHabits());
+
+        DailyReviewDto savedDailyReview = dailyReviewMapper.toDto(dailyReview);
+        savedDailyReview.setDailyHabits(dailyHabitsList);
+
+        return savedDailyReview;
+    } // DailyReviewDto
+
+    public List<DailyHabitsDto> newDailyHabits(List<DailyHabitsDto> dailyHabitsDto) throws InvalidDataException{
+        try{
+            dailyHabitsDto.forEach(dailyHabitDto -> {
+                DailyHabit dailyHabit = dailyHabitsMapper.toEntity(dailyHabitDto);
+                dailyHabit.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+                dailyHabit.setDbModDate(new Timestamp(System.currentTimeMillis()));
+
+                dailyHabit = dailyHabitRepository.save(dailyHabit);
+                dailyHabitDto = dailyHabitsMapper.toDto(dailyHabit);
+                dailyHabitDto.setHabit(habitService.findHabitById(dailyHabit.getIdHabit()));
+            });
+            return dailyHabitsDto;
+        } // try
+        catch(DataIntegrityViolationException | IllegalArgumentException ex){
+            throw new InvalidDataException("Error while saving the dailyhabit " + ex.getMessage());
+        } // catch
+    } // newDailyHabits
+
+    public DailyReviewDto findDailyReview(int idDay) throws DataNotFoundException{
+        Optional<DailyReview> optDailyReview = dailyReviewRepository.findByIdDay(idDay);
+        if(optDailyReview.isEmpty()){
+            throw new DataNotFoundException("Could not find any review for day " + idDay);
+        } // if
+
+        DailyReviewDto dailyReviewDto = dailyReviewMapper.toDto(optDailyReview.get());
+        dailyReviewDto.setDailyHabits(findDailyHabits(idDay));
+        return dailyReviewDto;
+    } // findDailyReview
+
+    public List<DailyHabitsDto> findDailyHabits(int idDay) throws DataNotFoundException{
+        List<DailyHabit> dailyHabits = dailyHabitRepository.findAllByIdDay(idDay);
+        List<DailyHabitsDto> dailyHabitsDtos = dailyHabitsMapper.toDtoList(dailyHabits);
+
+        dailyHabitsDtos.forEach(dailyHabitsDto ->
+                dailyHabitsDto.setHabit(habitService.findHabitById(dailyHabitsDto.getIdHabit())));
+        return dailyHabitsDtos;
+    } // findDailyHabits
 
     public DailyPreviewDto findDailyPreview(LocalDate dayDate) throws InvalidDataException, DataNotFoundException{
         try {
