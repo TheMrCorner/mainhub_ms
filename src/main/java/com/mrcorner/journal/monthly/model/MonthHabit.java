@@ -1,4 +1,4 @@
-package com.mrcorner.journal.daily.model;
+package com.mrcorner.journal.monthly.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,19 +18,18 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "daily_meal_prep")
-public class DailyMealPrep {
-
+@Table(name = "month_habit")
+public class MonthHabit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_meal_prep")
-    private int idMealPrep;
+    @Column(name = "id_relation")
+    private int idRelation;
 
-    @Column(name = "id_day")
-    private int idDay;
+    @Column(name = "id_habits")
+    private int idHabit;
 
-    private String midday;
-    private String supper;
+    @Column(name = "id_month")
+    private int idMonth;
 
     @Column(name = "db_del_date")
     private Timestamp dbDelDate;
@@ -40,4 +39,4 @@ public class DailyMealPrep {
 
     @Column(name = "db_mod_date")
     private Timestamp dbModDate;
-} // DailyMealPrep
+}

@@ -28,6 +28,7 @@ import com.mrcorner.journal.exceptions.DataNotFoundException;
 import com.mrcorner.journal.exceptions.InvalidDataException;
 import com.mrcorner.journal.monthly.service.HabitService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DailyService {
 
     // DailyPreview
@@ -65,17 +67,21 @@ public class DailyService {
     IDailyHabitsMapper dailyHabitsMapper;
     HabitService habitService;
 
-    public DailyPreviewDto newDailyPreview(DailyPreviewDto dailyPreviewDto) throws InvalidDataException {
+    public DailyPreviewDto saveDailyPreview(DailyPreviewDto dailyPreviewDto) throws InvalidDataException {
+        DailyPreview dailyPreview;
+        Optional<DailyPreview> optionalDailyPreview = dailyPreviewRepository.findDailyPreviewByCurrentDay(dailyPreviewDto.getCurrentDay());
+        optionalDailyPreview.ifPresent(preview -> log.info("Day already exists, updating it"));
 
-        // First check if day exists
-        DailyPreview dailyPreview = dailyPreviewMapper.toEntity(dailyPreviewDto);
-
-        Optional<DailyPreview> optionalDailyPreview = dailyPreviewRepository.findDailyPreviewByCurrentDay(dailyPreview.getCurrentDay());
-        optionalDailyPreview.ifPresent(preview -> {
-            throw new InvalidDataException("Day already exists " + preview.getCurrentDay() + " " + preview.getIdDay());
-        });
-
-        dailyPreview.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        if(optionalDailyPreview.isEmpty()) {
+            dailyPreview = dailyPreviewMapper.toEntity(dailyPreviewDto);
+            dailyPreview.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        } // if
+        else{
+            dailyPreview = optionalDailyPreview.get();
+            dailyPreview.setGoal(dailyPreviewDto.getGoal());
+            dailyPreview.setGratefulData(dailyPreviewDto.getGratefulData());
+            dailyPreview.setGreatData(dailyPreviewDto.getGreatData());
+        } // else
         dailyPreview.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
         try{
@@ -91,17 +97,29 @@ public class DailyService {
 
         // Format new result as dto and save the rest of the info
         DailyPreviewDto savedDailyPreview = dailyPreviewMapper.toDto(dailyPreview);
-        savedDailyPreview.setDailyTargets(newDailyTarget(dailyPreviewDto.getDailyTargets()));
-        savedDailyPreview.setDailyEvents(newDailyEventList(dailyPreviewDto.getDailyEvents(), dailyPreview.getIdDay()));
-        savedDailyPreview.setMealPrep(newDailyMealPrep(dailyPreviewDto.getMealPrep()));
+        savedDailyPreview.setDailyTargets(saveDailyTarget(dailyPreviewDto.getDailyTargets()));
+        savedDailyPreview.setDailyEvents(saveDailyEventList(dailyPreviewDto.getDailyEvents(), dailyPreview.getIdDay()));
+        savedDailyPreview.setMealPrep(saveDailyMealPrep(dailyPreviewDto.getMealPrep()));
 
         return savedDailyPreview;
     } // newDailyPreview
 
-    public DailyTargetDto newDailyTarget(DailyTargetDto dailyTargetDto) throws InvalidDataException{
-        DailyTarget dailyTarget = dailyTargetMapper.toEntity(dailyTargetDto);
+    public DailyTargetDto saveDailyTarget(DailyTargetDto dailyTargetDto) throws InvalidDataException{
+        DailyTarget dailyTarget;
 
-        dailyTarget.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        if(dailyTargetDto.getIdTarget() == 0) {
+            dailyTarget = dailyTargetMapper.toEntity(dailyTargetDto);
+            dailyTarget.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        } // if
+        else{
+            dailyTarget = dailyTargetRepository.getReferenceById(dailyTargetDto.getIdTarget());
+            dailyTarget.setFirstTarget(dailyTargetDto.getFirstTarget());
+            dailyTarget.setFtDuration((short) dailyTargetDto.getFtDuration().ordinal());
+            dailyTarget.setSecondTarget(dailyTargetDto.getSecondTarget());
+            dailyTarget.setStDuration((short) dailyTargetDto.getStDuration().ordinal());
+            dailyTarget.setThirdTarget(dailyTargetDto.getThirdTarget());
+            dailyTarget.setTtDuration((short) dailyTargetDto.getTtDuration().ordinal());
+        } // else
         dailyTarget.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
         try{
@@ -114,12 +132,19 @@ public class DailyService {
         return dailyTargetMapper.toDto(dailyTarget);
     } // newDailyTarget
 
-    public List<DailyEventDto> newDailyEventList(List<DailyEventDto> dailyEventList, int idDay) throws InvalidDataException{
-        List<DailyEvent> dailyEvents = dailyEventMapper.toEntityList(dailyEventList);
+    public List<DailyEventDto> saveDailyEventList(List<DailyEventDto> dailyEventList, int idDay) throws InvalidDataException{
+        dailyEventList.forEach(dailyEventDto -> {
+            DailyEvent dailyEvent;
+            dailyEventDto.setIdDay(idDay);
 
-        dailyEvents.forEach(dailyEvent -> {
-            dailyEvent.setIdDay(idDay);
-            dailyEvent.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+            if(dailyEventDto.getIdEvent() == 0) {
+                dailyEvent = dailyEventMapper.toEntity(dailyEventDto);
+                dailyEvent.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+            } // if
+            else{
+                dailyEvent = dailyEventRepository.getReferenceById(dailyEventDto.getIdEvent());
+                updateDailyEvent(dailyEventDto, dailyEvent);
+            } // else
             dailyEvent.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
             try{
@@ -128,18 +153,27 @@ public class DailyService {
             catch(IllegalArgumentException ex){
                 throw new InvalidDataException("Error saving daily event: " + ex);
             } // catch
-        });
 
-        return dailyEventMapper.toDtoList(dailyEvents);
+            dailyEventDto = dailyEventMapper.toDto(dailyEvent);
+        }); // forEach
+        return dailyEventList;
     } // newDailyEventList
 
-    public DailyEventDto newDailyEvent(DailyEventDto dailyEventDto) throws InvalidDataException{
+    public DailyEventDto saveDailyEvent(DailyEventDto dailyEventDto) throws InvalidDataException{
         if(dailyEventDto.getIdDay() <= 0){
             throw new InvalidDataException("No day provided for the event");
         } // if
 
-        DailyEvent dailyEvent = dailyEventMapper.toEntity(dailyEventDto);
-        dailyEvent.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        DailyEvent dailyEvent;
+
+        if(dailyEventDto.getIdEvent() == 0) {
+            dailyEvent = dailyEventMapper.toEntity(dailyEventDto);
+            dailyEvent.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        } // if
+        else{
+            dailyEvent = dailyEventRepository.getReferenceById(dailyEventDto.getIdEvent());
+            updateDailyEvent(dailyEventDto, dailyEvent);
+        } // else
         dailyEvent.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
         try{
@@ -152,10 +186,26 @@ public class DailyService {
         return dailyEventMapper.toDto(dailyEvent);
     } // newDailyEvent
 
-    public DailyMealPrepDto newDailyMealPrep(DailyMealPrepDto dailyMealPrepDto) throws InvalidDataException{
-        DailyMealPrep dailyMealPrep = dailyMealPrepMapper.toEntity(dailyMealPrepDto);
+    private void updateDailyEvent(DailyEventDto dailyEventDto, DailyEvent dailyEvent){
+        dailyEvent.setDescription(dailyEventDto.getDescription());
+        dailyEvent.setTitle(dailyEventDto.getTitle());
+        dailyEvent.setImportant(dailyEventDto.isImportant());
+        dailyEvent.setIniHour(dailyEventDto.getIniHour());
+        dailyEvent.setEndHour(dailyEventDto.getEndHour());
+    }
 
-        dailyMealPrep.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+    public DailyMealPrepDto saveDailyMealPrep(DailyMealPrepDto dailyMealPrepDto) throws InvalidDataException{
+        DailyMealPrep dailyMealPrep;
+
+        if(dailyMealPrepDto.getIdMealPrep() == 0) {
+            dailyMealPrep = dailyMealPrepMapper.toEntity(dailyMealPrepDto);
+            dailyMealPrep.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        } // if
+        else{
+            dailyMealPrep = dailyMealPrepRepository.getReferenceById(dailyMealPrepDto.getIdMealPrep());
+            dailyMealPrep.setMidday(dailyMealPrepDto.getMidday());
+            dailyMealPrep.setSupper(dailyMealPrepDto.getSupper());
+        } // else
         dailyMealPrep.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
         try{
@@ -168,13 +218,26 @@ public class DailyService {
         return dailyMealPrepMapper.toDto(dailyMealPrep);
     } // newDailyMealPrep
 
-    public DailyReviewDto newDailyReview(DailyReviewDto dailyReviewDto) throws InvalidDataException{
+    public DailyReviewDto saveDailyReview(DailyReviewDto dailyReviewDto) throws InvalidDataException{
         if(dailyReviewDto.getIdDay() <= 0){
             throw new InvalidDataException("No day provided for the review");
         } // if
 
-        DailyReview dailyReview = dailyReviewMapper.toEntity(dailyReviewDto);
-        dailyReview.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        DailyReview dailyReview;
+        if(dailyReviewDto.getIdDailyReview() == 0) {
+            dailyReview = dailyReviewMapper.toEntity(dailyReviewDto);
+            dailyReview.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+        }
+        else{
+            dailyReview = dailyReviewRepository.getReferenceById(dailyReviewDto.getIdDailyReview());
+            dailyReview.setMood((short) dailyReviewDto.getMood().ordinal());
+            dailyReview.setNotes(dailyReviewDto.getNotes());
+            dailyReview.setFtComplete(dailyReviewDto.isFtComplete());
+            dailyReview.setStComplete(dailyReviewDto.isStComplete());
+            dailyReview.setTtComplete(dailyReviewDto.isTtComplete());
+            dailyReview.setPlanToReality(dailyReviewDto.getPlanToReality());
+            dailyReview.setWinDay(dailyReviewDto.getWinDay());
+        }
         dailyReview.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
         try{
@@ -184,7 +247,7 @@ public class DailyService {
             throw new InvalidDataException("Error while saving the review " + ex.getMessage());
         } // catch
 
-        List<DailyHabitsDto> dailyHabitsList = newDailyHabits(dailyReviewDto.getDailyHabits());
+        List<DailyHabitsDto> dailyHabitsList = saveDailyHabits(dailyReviewDto.getDailyHabits());
 
         DailyReviewDto savedDailyReview = dailyReviewMapper.toDto(dailyReview);
         savedDailyReview.setDailyHabits(dailyHabitsList);
@@ -192,17 +255,24 @@ public class DailyService {
         return savedDailyReview;
     } // DailyReviewDto
 
-    public List<DailyHabitsDto> newDailyHabits(List<DailyHabitsDto> dailyHabitsDto) throws InvalidDataException{
+    public List<DailyHabitsDto> saveDailyHabits(List<DailyHabitsDto> dailyHabitsDto) throws InvalidDataException{
         try{
             dailyHabitsDto.forEach(dailyHabitDto -> {
-                DailyHabit dailyHabit = dailyHabitsMapper.toEntity(dailyHabitDto);
-                dailyHabit.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+                DailyHabit dailyHabit;
+                if(dailyHabitDto.getIdDailyHabit() == 0) {
+                    dailyHabit = dailyHabitsMapper.toEntity(dailyHabitDto);
+                    dailyHabit.setDbInsDate(new Timestamp(System.currentTimeMillis()));
+                } // if
+                else{
+                    dailyHabit = dailyHabitRepository.getReferenceById(dailyHabitDto.getIdDailyHabit());
+                    dailyHabit.setStatus((short) dailyHabitDto.getStatus().ordinal());
+                } // else
                 dailyHabit.setDbModDate(new Timestamp(System.currentTimeMillis()));
 
                 dailyHabit = dailyHabitRepository.save(dailyHabit);
                 dailyHabitDto = dailyHabitsMapper.toDto(dailyHabit);
                 dailyHabitDto.setHabit(habitService.findHabitById(dailyHabit.getIdHabit()));
-            });
+            }); // forEach
             return dailyHabitsDto;
         } // try
         catch(DataIntegrityViolationException | IllegalArgumentException ex){

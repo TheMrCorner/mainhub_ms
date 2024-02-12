@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalTime;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -14,8 +16,8 @@ import lombok.ToString;
 public class DailyEventDto {
     private int idEvent;
     private int idDay;
-    private String iniHour;
-    private String endHour;
+    private LocalTime iniHour;
+    private LocalTime endHour;
     private boolean important;
     private String title;
     private String description;

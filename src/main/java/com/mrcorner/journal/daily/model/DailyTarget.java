@@ -1,5 +1,6 @@
 package com.mrcorner.journal.daily.model;
 
+import com.mrcorner.journal.utils.TargetDurationEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,17 +33,17 @@ public class DailyTarget {
     @Column(name = "first_target")
     private String firstTarget;
     @Column(name = "ft_duration")
-    private String ftDuration;
+    private short ftDuration;
 
     @Column(name = "second_target")
     private String secondTarget;
     @Column(name = "st_duration")
-    private String stDuration;
+    private short stDuration;
 
     @Column(name = "third_target")
     private String thirdTarget;
     @Column(name = "tt_duration")
-    private String ttDuration;
+    private short ttDuration;
 
     @Column(name = "db_del_date")
     private Timestamp dbDelDate;

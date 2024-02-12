@@ -6,10 +6,13 @@ import com.mrcorner.journal.monthly.dto.HabitDto;
 import com.mrcorner.journal.monthly.mapper.IHabitsMapper;
 import com.mrcorner.journal.monthly.model.Habits;
 import com.mrcorner.journal.monthly.repository.HabitsRepository;
+import com.mrcorner.journal.monthly.repository.MonthHabitRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -19,6 +22,12 @@ public class HabitService {
     // Repo and mapper
     HabitsRepository habitsRepository;
     IHabitsMapper habitsMapper;
+
+    // MonthHabit
+    MonthHabitRepository monthHabitRepository;
+
+    // Monthly
+    MonthlyService monthlyService;
 
     public HabitDto newHabit(HabitDto habitDto) throws InvalidDataException {
         Habits habits = habitsMapper.toEntity(habitDto);
@@ -40,5 +49,11 @@ public class HabitService {
         } // if
         return habitsMapper.toDto(optionalHabits.get());
     } // findHabitById
+
+    public List<HabitDto> findHabitsByDay(LocalDate dayDate) throws DataNotFoundException, InvalidDataException{
+        Integer idMonth = monthlyService.findMonthByDay(dayDate);
+        List<Habits> habitsByMonth = habitsRepository.findAllByIdHabitIn(monthHabitRepository.findAllIdHabitsByIdMonth(idMonth));
+        return habitsMapper.toDtoList(habitsByMonth);
+    } // findHabits
 
 } // HabitService
