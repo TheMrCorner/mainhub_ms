@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping(PathUtils.API_BASE_PATH + PathUtils.API_VERSION + "/daily")
@@ -41,22 +42,28 @@ public class DailyController {
         return ResponseEntity.ok(dailyService.findDailyReview(idDay));
     } // findDailyPreview
 
-    @PostMapping("/new/preview")
+    @GetMapping("/find/events/{idDay}")
     @PreAuthorize("hasAnyAuthority('APP', 'ADMIN')")
-    public ResponseEntity<DailyPreviewDto> createNewDailyPreview(@RequestBody DailyPreviewDto previewDto) throws InvalidDataException {
-        return ResponseEntity.ok(dailyService.newDailyPreview(previewDto));
+    public ResponseEntity<List<DailyEventDto>> findDailyEvents(@Valid @PathVariable Integer idDay) throws InvalidDataException, DataNotFoundException{
+        return ResponseEntity.ok(dailyService.findAllEventsByIdDay(idDay));
+    } // findDailyPreview
+
+    @PostMapping("/save/preview")
+    @PreAuthorize("hasAnyAuthority('APP', 'ADMIN')")
+    public ResponseEntity<DailyPreviewDto> saveDailyPreview(@RequestBody DailyPreviewDto previewDto) throws InvalidDataException {
+        return ResponseEntity.ok(dailyService.saveDailyPreview(previewDto));
     } // createNewDailyPreview
 
-    @PostMapping("/new/event")
+    @PostMapping("/save/event")
     @PreAuthorize("hasAnyAuthority('APP', 'ADMIN')")
-    public ResponseEntity<DailyEventDto> createNewEvent(@RequestBody DailyEventDto dailyEventDto) throws InvalidDataException {
-        return ResponseEntity.ok(dailyService.newDailyEvent(dailyEventDto));
+    public ResponseEntity<DailyEventDto> saveEvent(@RequestBody DailyEventDto dailyEventDto) throws InvalidDataException {
+        return ResponseEntity.ok(dailyService.saveDailyEvent(dailyEventDto));
     } // createNewEvent
 
-    @PostMapping("/new/review")
+    @PostMapping("/save/review")
     @PreAuthorize("hasAnyAuthority('APP', 'ADMIN')")
-    public ResponseEntity<DailyReviewDto> createNewDailyReview(@RequestBody DailyReviewDto dailyReviewDto) throws InvalidDataException{
-        return ResponseEntity.ok(dailyService.newDailyReview(dailyReviewDto));
+    public ResponseEntity<DailyReviewDto> saveDailyReview(@RequestBody DailyReviewDto dailyReviewDto) throws InvalidDataException{
+        return ResponseEntity.ok(dailyService.saveDailyReview(dailyReviewDto));
     } // createNewDailyReview
 
 } // DailyController
