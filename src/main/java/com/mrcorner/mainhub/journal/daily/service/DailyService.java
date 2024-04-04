@@ -1,5 +1,7 @@
 package com.mrcorner.mainhub.journal.daily.service;
 
+import com.mrcorner.mainhub.exceptions.DataNotFoundException;
+import com.mrcorner.mainhub.exceptions.InvalidDataException;
 import com.mrcorner.mainhub.utils.Http;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,32 +19,32 @@ public class DailyService {
     @Value("${app.urls.daily.dailySourcePath}")
     private String dailySourcePath;
 
-    public ResponseEntity<String> findDailyPreview(LocalDate dayDate){
+    public ResponseEntity<String> findDailyPreview(LocalDate dayDate) throws InvalidDataException, DataNotFoundException {
         String url = dailySourcePath + "/daily/find/" + dayDate.toString();
         return http.getRequest(url);
     }
 
-    public ResponseEntity<String> findDailyReview(Integer idDay){
+    public ResponseEntity<String> findDailyReview(Integer idDay) throws InvalidDataException, DataNotFoundException{
         String url = dailySourcePath + "/daily/find/review?idDay=" + idDay.toString();
         return http.getRequest(url);
     }
 
-    public ResponseEntity<String> findDailyEvents(Integer idDay){
+    public ResponseEntity<String> findDailyEvents(Integer idDay) throws InvalidDataException, DataNotFoundException{
         String url = dailySourcePath + "/daily/find/events/" + idDay.toString();
         return http.getRequest(url);
     }
 
-    public ResponseEntity<String> saveDailyPreview(String body){
+    public ResponseEntity<String> saveDailyPreview(String body) throws InvalidDataException{
         String url = dailySourcePath + "/daily/save/preview";
         return http.postRequest(url, body);
     }
 
-    public ResponseEntity<String> saveEvent(String body){
+    public ResponseEntity<String> saveEvent(String body) throws InvalidDataException{
         String url = dailySourcePath + "/daily/save/event";
         return http.postRequest(url, body);
     }
 
-    public ResponseEntity<String> saveDailyReview(String body){
+    public ResponseEntity<String> saveDailyReview(String body) throws InvalidDataException{
         String url = dailySourcePath + "/daily/save/review";
         return http.postRequest(url, body);
     }

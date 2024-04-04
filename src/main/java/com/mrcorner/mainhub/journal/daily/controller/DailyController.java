@@ -1,5 +1,7 @@
 package com.mrcorner.mainhub.journal.daily.controller;
 
+import com.mrcorner.mainhub.exceptions.DataNotFoundException;
+import com.mrcorner.mainhub.exceptions.InvalidDataException;
 import com.mrcorner.mainhub.journal.daily.service.DailyService;
 import com.mrcorner.mainhub.utils.PathUtils;
 import jakarta.websocket.server.PathParam;
@@ -26,37 +28,37 @@ public class DailyController {
 
     @PreAuthorize("hasAuthority('APP')")
     @GetMapping("/find/{dayDate}")
-    public ResponseEntity<String> findDailyPreview(@PathVariable LocalDate dayDate){
+    public ResponseEntity<String> findDailyPreview(@PathVariable LocalDate dayDate) throws InvalidDataException, DataNotFoundException {
         return dailyService.findDailyPreview(dayDate);
     }
 
     @PreAuthorize("hasAuthority('APP')")
     @GetMapping("/find/review")
-    public ResponseEntity<String> findDailyReview(@RequestParam Integer idDay){
+    public ResponseEntity<String> findDailyReview(@RequestParam Integer idDay) throws InvalidDataException, DataNotFoundException {
         return dailyService.findDailyReview(idDay);
     }
 
     @PreAuthorize("hasAuthority('APP')")
     @GetMapping("/find/events/{idDay}")
-    public ResponseEntity<String> findDailyEvents(@PathVariable Integer idDay){
+    public ResponseEntity<String> findDailyEvents(@PathVariable Integer idDay) throws InvalidDataException, DataNotFoundException {
         return dailyService.findDailyEvents(idDay);
     }
 
     @PreAuthorize("hasAuthority('APP')")
     @PostMapping("/save/preview")
-    public ResponseEntity<String> saveDailyPreview(@RequestBody String dailyPreview){
+    public ResponseEntity<String> saveDailyPreview(@RequestBody String dailyPreview) throws InvalidDataException{
         return dailyService.saveDailyPreview(dailyPreview);
     }
 
     @PreAuthorize("hasAuthority('APP')")
     @PostMapping("/save/event")
-    public ResponseEntity<String> saveEvent(@RequestBody String dailyEvent){
+    public ResponseEntity<String> saveEvent(@RequestBody String dailyEvent) throws InvalidDataException{
         return dailyService.saveEvent(dailyEvent);
     }
 
     @PreAuthorize("hasAuthority('APP')")
     @PostMapping("/save/review")
-    public ResponseEntity<String> saveDailyReview(@RequestBody String dailyReview){
+    public ResponseEntity<String> saveDailyReview(@RequestBody String dailyReview) throws InvalidDataException{
         return dailyService.saveDailyReview(dailyReview);
     }
 
