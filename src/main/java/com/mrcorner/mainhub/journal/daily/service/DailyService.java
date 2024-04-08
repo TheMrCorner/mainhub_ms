@@ -34,6 +34,12 @@ public class DailyService {
         return http.getRequest(url);
     }
 
+    public ResponseEntity<String> findAllDailyEventsBetweenDates(LocalDate startDate, LocalDate endDate, Boolean important) throws InvalidDataException {
+        String url = dailySourcePath + "/daily/find/events/betweendates?startDate=" + startDate.toString()
+                     + "&endDate=" + endDate.toString() + "&important=" + important;
+        return http.getRequest(url); 
+    }
+
     public ResponseEntity<String> saveDailyPreview(String body) throws InvalidDataException{
         String url = dailySourcePath + "/daily/save/preview";
         return http.postRequest(url, body);

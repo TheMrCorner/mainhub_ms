@@ -26,14 +26,38 @@ public class WeeklyController {
 
 
     @PreAuthorize("hasAuthority('APP')")
-    @GetMapping("find/preview/{weekDate}")
+    @GetMapping("/find/preview/{weekDate}")
     public ResponseEntity<String> findWeeklyPreview(@Valid @PathVariable LocalDate weekDate) throws DataNotFoundException, InvalidDataException{
         return weeklyService.findWeeklyPreview(weekDate);
     }
 
     @PreAuthorize("hasAuthority('APP')")
-    @PostMapping("save/preview")
+    @GetMapping("/find/review/{idWeek}")
+    public ResponseEntity<String> findWeeklyReview(@PathVariable Integer idWeek) throws DataNotFoundException, InvalidDataException{
+        return weeklyService.findWeeklyReview(idWeek);
+    }
+
+    @PreAuthorize("hasAuthority('APP')")
+    @GetMapping("/find/buyinglist/{idWeek}")
+    public ResponseEntity<String> findWeeklyBuyingList(@PathVariable Integer idWeek) throws DataNotFoundException, InvalidDataException{
+        return weeklyService.findWeeklyBuyingList(idWeek);
+    }
+
+    @PreAuthorize("hasAuthority('APP')")
+    @PostMapping("/save/preview")
     public ResponseEntity<String> saveWeeklyPreview(@RequestBody String weeklyPreview) throws InvalidDataException{
         return weeklyService.saveWeeklyPreview(weeklyPreview);
+    }
+    
+    @PreAuthorize("hasAuthority('APP')")
+    @PostMapping("/save/review")
+    public ResponseEntity<String> saveWeeklyReview(@RequestBody String weeklyReview) {
+        return weeklyService.saveWeeklyReview(weeklyReview);
+    }
+
+    @PreAuthorize("hasAuthority('APP')")
+    @PostMapping("/save/buyinglist")
+    public ResponseEntity<String> saveWeeklyBuyingList(@RequestBody String weeklyBuyingList) {
+        return weeklyService.saveWeeklyBuyingList(weeklyBuyingList);
     }
 }
