@@ -36,7 +36,10 @@ public class DailyService {
 
     public ResponseEntity<String> findAllDailyEventsBetweenDates(LocalDate startDate, LocalDate endDate, Boolean important) throws InvalidDataException {
         String url = dailySourcePath + "/daily/find/events/betweendates?startDate=" + startDate.toString()
-                     + "&endDate=" + endDate.toString() + "&important=" + important;
+                     + "&endDate=" + endDate.toString();
+        if(important != null){
+            url += "&important=" + important;
+        }
         return http.getRequest(url); 
     }
 

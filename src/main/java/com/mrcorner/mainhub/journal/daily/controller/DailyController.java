@@ -44,8 +44,9 @@ public class DailyController {
         return dailyService.findDailyEvents(idDay);
     }
 
+    @PreAuthorize("hasAuthority('APP')")
     @GetMapping("/find/events/betweendates")
-    public ResponseEntity<String> findAllEventsBetweenDates(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam Boolean important) throws InvalidDataException {
+    public ResponseEntity<String> findAllEventsBetweenDates(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam(required = false) Boolean important) throws InvalidDataException {
         return dailyService.findAllDailyEventsBetweenDates(startDate, endDate, important);
     }
     
