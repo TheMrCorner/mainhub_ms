@@ -1,0 +1,80 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /mainhub
+
+app:
+  security:
+    enabled: false
+  version: "v1"
+  basePath: "/api/"
+  urls:
+    daily:
+      dailySourcePath: http://192.168.1.167:7010/journal-daily/api/v1
+      #dailySourcePath: http://localhost:7010/journal-daily/api/v1
+      weeklySourcePath: http://192.168.1.167:7011/journal-weekly/api/v1
+      #weeklySourcePath: http://localhost:7011/journal-weekly/api/v1
+
+management:
+  endpoint:
+    health:
+      show-details: "always"
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health, info
+
+logging:
+  level:
+    org:
+      springframework: INFO
+
+springdoc:
+  packagesToScan: com.mrcorner.mainhub
+  title: mainhub-v1
+  description: "Microservice to control all data that is entering the DB"
+  writer-with-order-by-keys: true
+
+#If you use a database then uncomment below lines and update db properties accordingly
+spring:
+  jackson:
+    time-zone: Europe/Madrid
+  config:
+    import: "optional:configtree:/mnt/secrets/${{ values.product }}/"
+  application:
+    name: mainhub
+  cloud:
+    config:
+      enabled: false
+  profiles:
+    active: ${ENVIRONMENT:local}
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    platform: postgresqllocal
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.1.145:5432/journal?currentSchema=journal
+    username: exe_journal
+    password: j0uRn@l
+  jpa:
+    show-sql: false
+    hibernate.ddl-auto: none
+    hibernate.id.new_generator_mappings: true
+    hibernate.use-new-id-generator-mappings: true
+    hbm2ddl.auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: journal
+        format_sql: true
+        generate_statistics: false
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://192.168.1.145:5432/journal?currentSchema=journal
+    schemas: journal
+    user: apl_journal
+    password: 1o9r34L
+    validate-on-migrate: false
+    baseline-on-migrate: true
+    baseline-version: 0
