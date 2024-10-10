@@ -5,6 +5,7 @@ import com.mrcorner.mainhub.utils.PathUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,5 +34,10 @@ public class ChronosController {
     @PostMapping("/history")
     public ResponseEntity<String> obtainHistory(@RequestBody String requestDto){
         return chronosService.obtainHistoryBetweenDates(requestDto);
+    }
+
+    @GetMapping("/test-jenkins")
+    public ResponseEntity<String> testJenkins() {
+        return ResponseEntity.ok("This is a build made automatically by Jenkins");
     }
 }
